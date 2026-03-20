@@ -7,16 +7,20 @@ describe 'database' do
     raw_output = nil
     IO.popen("./repl test.db", "r+") do |pipe|
       commands.each do |command|
-        pipe.puts command
+        begin
+          pipe.puts command
+        rescue Errno::EPIPE
+          break
+        end
       end
 
-      pipe.close_write
+        pipe.close_write
 
-      # Read entire output
-      raw_output = pipe.gets(nil)
+        # Read entire output
+        raw_output = pipe.gets(nil)
+      end
+      raw_output.split("\n")
     end
-    raw_output.split("\n")
-  end
 
   it 'inserts and retrieves a row' do
     result = run_script([
@@ -155,6 +159,18 @@ describe 'database' do
     ])
   end
   
+  it 'prints error message when table is full' do
+    script = (1..1401).map do |i|
+      "insert #{i} user#{i} person#{i}@example.com"
+    end
+    script << ".exit"
+    result = run_script(script)
+    expect(result.last(2)).to match_array([
+      "db > Executed.",
+      "db > Need to implement updating parent after split",
+    ])
+  end
+  
   it 'allows printing out the structure of a 3 leaf b tree' do
     script = (1..14).map do |i|
       "insert #{i} user#{i} person#{i}@example.com"    
@@ -183,7 +199,8 @@ describe 'database' do
       "  - 12",
       "  - 13",
       "  - 14",
-      "db > Need to implement searching an internal node",
+      "db > Executed.",
+      "db > ",
     ])
   end
 end
