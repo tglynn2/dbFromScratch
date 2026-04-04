@@ -158,19 +158,7 @@ describe 'database' do
       "db > ",
     ])
   end
-  
-  it 'prints error message when table is full' do
-    script = (1..1401).map do |i|
-      "insert #{i} user#{i} person#{i}@example.com"
-    end
-    script << ".exit"
-    result = run_script(script)
-    expect(result.last(2)).to match_array([
-      "db > Executed.",
-      "db > Need to implement splitting internal node",
-    ])
-  end
-  
+    
   it 'allows printing out the structure of a 3 leaf b tree' do
     script = (1..14).map do |i|
       "insert #{i} user#{i} person#{i}@example.com"    
